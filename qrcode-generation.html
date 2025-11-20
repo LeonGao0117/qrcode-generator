@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Daisy的课堂二维码生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 15px;
+            margin: 0;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        @media (min-width: 768px) {
+            .header h1 {
+                font-size: 48px;
+            }
+            .header p {
+                font-size: 18px;
+            }
+        }
+        
+        .input-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        @media (min-width: 768px) {
+            .input-section {
+                padding: 40px;
+            }
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        @media (min-width: 768px) {
+            .input-group label {
+                font-size: 16px;
+            }
+        }
+        
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-family: inherit;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        
+        .input-group select {
+            background-color: white;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+        }
+        
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .input-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        @media (min-width: 768px) {
+            .color-picker {
+                gap: 15px;
+            }
+        }
+        
+        .color-option {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        @media (min-width: 768px) {
+            .color-option {
+                width: 60px;
+                height: 60px;
+            }
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.active {
+            border-color: #333;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #333;
+        }
+        
+        .color-option.active::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (min-width: 768px) {
+            .btn {
+                padding: 16px 40px;
+                font-size: 18px;
+            }
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        @media (hover: none) {
+            .btn:hover {
+                transform: none;
+            }
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .preview-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        @media (min-width: 768px) {
+            .preview-section {
+                padding: 40px;
+            }
+        }
+        
+        .preview-section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 24px;
+        }
+        
+        @media (min-width: 768px) {
+            .preview-section h2 {
+                margin-bottom: 30px;
+                font-size: 28px;
+            }
+        }
+        
+        #cardCanvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-radius: 30px;
+        }
+        
+        #cardImage {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-radius: 30px;
+        }
+        
+        .save-tip {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.3);
+        }
+        
+        @media (min-width: 768px) {
+            .save-tip {
+                font-size: 20px;
+                padding: 25px;
+            }
+        }
+        
+        .author-section {
+            text-align: center;
+            color: white;
+            padding: 30px;
+            margin-top: 20px;
+        }
+        
+        .author-section p {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Daisy的课堂二维码生成器</h1>
+            <p>输入信息，一键生成带二维码的精美卡片</p>
+        </div>
+        
+        <div class="input-section">
+            <h2 style="margin-bottom: 30px; color: #333;">📝 填写卡片信息</h2>
+            
+            <div class="input-group">
+                <label>🔗 链接地址 *</label>
+                <input type="url" id="linkUrl" placeholder="https://your-link-here.com" value="https://hammerhead-hope-47d.notion.site/Liam-s-class-minutes-2ada6bc9434c806ba2d6c09686a10e54">
+            </div>
+            
+            <div class="input-group">
+                <label>📌 卡片标题 *</label>
+                <input type="text" id="cardTitle" placeholder="例如：Liam 的课堂纪要" value="Liam 的课堂纪要">
+            </div>
+            
+            <div class="input-group">
+                <label>📄 卡片描述</label>
+                <textarea id="cardDesc" placeholder="例如：本周课堂重点内容总结与后续任务安排">本周课堂重点内容总结与后续任务安排</textarea>
+            </div>
+            
+            <div class="input-group">
+                <label>😊 图标 Emoji（可选）</label>
+                <select class="input-field" id="cardIcon">
+                    <option value="📚">📚 书本</option>
+                    <option value="📝">📝 笔记</option>
+                    <option value="🎓">🎓 毕业帽</option>
+                    <option value="✏️">✏️ 铅笔</option>
+                    <option value="📖">📖 打开的书</option>
+                    <option value="🎯">🎯 目标</option>
+                    <option value="💡">💡 灯泡</option>
+                    <option value="🌟">🌟 星星</option>
+                    <option value="🎨">🎨 调色板</option>
+                    <option value="🎵">🎵 音符</option>
+                    <option value="⚡">⚡ 闪电</option>
+                    <option value="🔥">🔥 火焰</option>
+                    <option value="💎">💎 钻石</option>
+                    <option value="🎁">🎁 礼物</option>
+                    <option value="🌈">🌈 彩虹</option>
+                    <option value="🚀">🚀 火箭</option>
+                    <option value="❤️">❤️ 爱心</option>
+                    <option value="⭐">⭐ 星星</option>
+                    <option value="🎉">🎉 庆祝</option>
+                    <option value="🌸">🌸 花朵</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label>🎨 选择配色方案</label>
+                <div class="color-picker">
+                    <div class="color-option active" data-color1="#667eea" data-color2="#764ba2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                    <div class="color-option" data-color1="#f093fb" data-color2="#f5576c" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                    <div class="color-option" data-color1="#4facfe" data-color2="#00f2fe" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+                    <div class="color-option" data-color1="#43e97b" data-color2="#38f9d7" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></div>
+                    <div class="color-option" data-color1="#fa709a" data-color2="#fee140" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></div>
+                    <div class="color-option" data-color1="#30cfd0" data-color2="#330867" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);"></div>
+                    <div class="color-option" data-color1="#a8edea" data-color2="#fed6e3" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);"></div>
+                    <div class="color-option" data-color1="#ff9a56" data-color2="#ff6a88" style="background: linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%);"></div>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="generateCard()">✨ 生成卡片</button>
+        </div>
+        
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <h2>👀 卡片预览</h2>
+            
+            <div class="save-tip">
+                📱 长按下方图片可保存到相册
+            </div>
+            
+            <img id="cardImage" style="display: none;" alt="二维码卡片">
+            <canvas id="cardCanvas" width="600" height="900" style="display: none;"></canvas>
+        </div>
+    </div>
+    
+    <!-- 作者信息 -->
+    <div class="container">
+        <div class="author-section">
+            <p>Created by Gao Liang © 2025</p>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
+    <script>
+        // 检测 QRCode 库是否加载成功，如果失败则尝试备用CDN
+        window.addEventListener('load', function() {
+            if (typeof QRCode === 'undefined') {
+                console.warn('主CDN加载失败，尝试备用CDN...');
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/qrcodejs2@0.0.2/qrcode.min.js';
+                script.onerror = function() {
+                    console.error('所有CDN均加载失败');
+                    alert('二维码库加载失败，请检查网络连接或刷新页面！');
+                };
+                document.head.appendChild(script);
+            }
+        });
+        
+        let selectedColor1 = '#667eea';
+        let selectedColor2 = '#764ba2';
+        
+        // 颜色选择
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                selectedColor1 = this.getAttribute('data-color1');
+                selectedColor2 = this.getAttribute('data-color2');
+            });
+        });
+        
+        // 生成卡片
+        async function generateCard() {
+            const url = document.getElementById('linkUrl').value.trim();
+            const title = document.getElementById('cardTitle').value.trim();
+            const desc = document.getElementById('cardDesc').value.trim();
+            const icon = document.getElementById('cardIcon').value || '📚';
+            
+            if (!url) {
+                alert('请输入链接地址！');
+                return;
+            }
+            
+            if (!title) {
+                alert('请输入卡片标题！');
+                return;
+            }
+            
+            // 检查 QRCode 库是否加载
+            if (typeof QRCode === 'undefined') {
+                alert('二维码库加载失败，请刷新页面重试！');
+                return;
+            }
+            
+            // 显示加载提示
+            const loadingToast = showLoading('正在生成二维码...');
+            
+            // 显示预览区域
+            document.getElementById('previewSection').style.display = 'block';
+            
+            try {
+                // 生成二维码
+                const qrcodeDataUrl = await generateQRCode(url);
+                
+                if (!qrcodeDataUrl) {
+                    throw new Error('二维码数据为空');
+                }
+                
+                // 绘制到主 Canvas
+                await drawCardToCanvas(title, desc, icon, qrcodeDataUrl);
+                
+                // 将 Canvas 转换为图片，以便长按保存
+                const canvas = document.getElementById('cardCanvas');
+                const cardImage = document.getElementById('cardImage');
+                
+                if (!canvas) {
+                    throw new Error('Canvas元素未找到');
+                }
+                
+                if (!cardImage) {
+                    throw new Error('Image元素未找到');
+                }
+                
+                const finalImageUrl = canvas.toDataURL('image/png', 1.0);
+                cardImage.src = finalImageUrl;
+                cardImage.style.display = 'block';
+                canvas.style.display = 'none';  // 隐藏 Canvas，显示图片
+                
+                // 关闭加载提示
+                hideLoading(loadingToast);
+                
+                // 滚动到预览区域
+                setTimeout(() => {
+                    document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+                
+            } catch (error) {
+                console.error('生成失败:', error);
+                hideLoading(loadingToast);
+                alert('二维码生成失败，请检查网络连接或稍后重试！\n\n错误信息：' + error.message);
+                document.getElementById('previewSection').style.display = 'none';
+            }
+        }
+        
+        // 生成二维码并返回 base64 数据
+        async function generateQRCode(url) {
+            return new Promise((resolve, reject) => {
+                // 创建临时容器
+                const tempDiv = document.createElement('div');
+                tempDiv.id = 'tempQrcode';
+                tempDiv.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 250px; height: 250px;';
+                document.body.appendChild(tempDiv);
+                
+                try {
+                    // 生成二维码
+                    const qr = new QRCode(tempDiv, {
+                        text: url,
+                        width: 250,
+                        height: 250,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    
+                    // 等待二维码生成（多次尝试，最多等待3秒）
+                    let attempts = 0;
+                    const maxAttempts = 30;
+                    
+                    const checkQRCode = () => {
+                        attempts++;
+                        
+                        const qrcodeCanvas = tempDiv.querySelector('canvas');
+                        const qrcodeImg = tempDiv.querySelector('img');
+                        
+                        // 优先使用 canvas
+                        if (qrcodeCanvas) {
+                            try {
+                                const dataUrl = qrcodeCanvas.toDataURL('image/png');
+                                if (document.body.contains(tempDiv)) {
+                                    document.body.removeChild(tempDiv);
+                                }
+                                resolve(dataUrl);
+                                return;
+                            } catch (e) {
+                                console.error('Canvas转换失败:', e);
+                            }
+                        }
+                        
+                        // 如果有 img 且已加载完成
+                        if (qrcodeImg && qrcodeImg.complete && qrcodeImg.naturalWidth > 0) {
+                            try {
+                                // 将 img 转为 canvas
+                                const tempCanvas = document.createElement('canvas');
+                                tempCanvas.width = 250;
+                                tempCanvas.height = 250;
+                                const tempCtx = tempCanvas.getContext('2d');
+                                tempCtx.drawImage(qrcodeImg, 0, 0, 250, 250);
+                                const dataUrl = tempCanvas.toDataURL('image/png');
+                                if (document.body.contains(tempDiv)) {
+                                    document.body.removeChild(tempDiv);
+                                }
+                                resolve(dataUrl);
+                                return;
+                            } catch (e) {
+                                console.error('图片转换失败:', e);
+                            }
+                        }
+                        
+                        // 继续等待或超时
+                        if (attempts < maxAttempts) {
+                            setTimeout(checkQRCode, 100);
+                        } else {
+                            if (document.body.contains(tempDiv)) {
+                                document.body.removeChild(tempDiv);
+                            }
+                            reject(new Error('二维码生成超时（等待3秒后未检测到二维码元素）'));
+                        }
+                    };
+                    
+                    // 开始检查
+                    setTimeout(checkQRCode, 100);
+                    
+                } catch (error) {
+                    if (document.body.contains(tempDiv)) {
+                        document.body.removeChild(tempDiv);
+                    }
+                    reject(error);
+                }
+            });
+        }
+        
+        // 绘制卡片到 Canvas
+        async function drawCardToCanvas(title, desc, icon, qrcodeDataUrl) {
+            return new Promise((resolve, reject) => {
+                const canvas = document.getElementById('cardCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // 清空画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制渐变背景
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, selectedColor1);
+                gradient.addColorStop(1, selectedColor2);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制装饰圆形
+                const radialGradient = ctx.createRadialGradient(canvas.width * 0.8, canvas.height * 0.2, 0, canvas.width * 0.8, canvas.height * 0.2, canvas.width * 0.8);
+                radialGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+                radialGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = radialGradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制图标
+                ctx.font = '80px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'white';
+                ctx.fillText(icon, canvas.width / 2, 150);
+                
+                // 绘制标题
+                ctx.font = 'bold 42px Arial, sans-serif';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetY = 2;
+                ctx.fillText(title, canvas.width / 2, 230);
+                
+                // 绘制描述
+                ctx.font = '18px Arial, sans-serif';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                const descText = desc || '扫描下方二维码查看详细内容';
+                wrapText(ctx, descText, canvas.width / 2, 280, canvas.width - 100, 30);
+                
+                // 绘制二维码白色背景
+                ctx.fillStyle = 'white';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                ctx.shadowBlur = 30;
+                ctx.shadowOffsetY = 10;
+                roundRect(ctx, (canvas.width - 300) / 2, 360, 300, 300, 20);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // 从 base64 加载并绘制二维码
+                const qrImage = new Image();
+                qrImage.onload = function() {
+                    ctx.drawImage(qrImage, (canvas.width - 250) / 2, 385, 250, 250);
+                    
+                    // 绘制提示文字
+                    ctx.font = 'bold 22px Arial, sans-serif';
+                    ctx.fillStyle = 'white';
+                    ctx.fillText('👆 长按识别二维码查看详细内容', canvas.width / 2, 720);
+                    
+                    // 绘制底部文字
+                    ctx.font = '14px Arial';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.fillText('© 2025 Generated by Gao Liang', canvas.width / 2, 850);
+                    
+                    resolve();
+                };
+                qrImage.onerror = function() {
+                    console.error('二维码图片加载失败');
+                    reject(new Error('二维码图片加载失败'));
+                };
+                qrImage.src = qrcodeDataUrl;
+            });
+        }
+        
+        // 文字换行函数
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            const words = text.split('');
+            let line = '';
+            let lines = [];
+            
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n];
+                const metrics = context.measureText(testLine);
+                const testWidth = metrics.width;
+                
+                if (testWidth > maxWidth && n > 0) {
+                    lines.push(line);
+                    line = words[n];
+                } else {
+                    line = testLine;
+                }
+            }
+            lines.push(line);
+            
+            const startY = y - ((lines.length - 1) * lineHeight) / 2;
+            for (let i = 0; i < lines.length; i++) {
+                context.fillText(lines[i], x, startY + (i * lineHeight));
+            }
+        }
+        
+        // 圆角矩形函数
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+        
+        // 显示加载提示
+        function showLoading(message) {
+            const loading = document.createElement('div');
+            loading.id = 'loadingToast';
+            loading.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 10px;
+                font-size: 16px;
+                z-index: 10000;
+                text-align: center;
+            `;
+            loading.innerHTML = `
+                <div style="margin-bottom: 10px;">⏳</div>
+                <div>${message}</div>
+            `;
+            document.body.appendChild(loading);
+            return loading;
+        }
+        
+        // 隐藏加载提示
+        function hideLoading(loading) {
+            if (loading && loading.parentNode) {
+                loading.parentNode.removeChild(loading);
+            }
+        }
+        
+        // 回车快捷键
+        document.getElementById('linkUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateCard();
+        });
+        
+        document.getElementById('cardTitle').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateCard();
+        });
+    </script>
+</body>
+</html>
