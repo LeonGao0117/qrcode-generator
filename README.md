@@ -41,7 +41,7 @@
 
 ### 在线使用
 
-1. 访问 [Demo 页面](#)（替换为你的 GitHub Pages 链接）
+1. 访问 https://leongao0117.github.io/qrcode-generator/
 2. 输入链接地址、卡片标题和描述
 3. 选择喜欢的颜色和图标
 4. 点击"生成卡片"按钮
@@ -51,7 +51,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/你的用户名/qrcode-generator.git
+git clone https://github.com/LeonGao0117/qrcode-generator.git
 
 # 进入项目目录
 cd qrcode-generator
@@ -150,7 +150,7 @@ qrcode-generator/
 
 **GaoLiang**
 
-- GitHub: [@你的GitHub用户名](https://github.com/LeonGao0117)
+- GitHub: [@LeonGao0117](https://github.com/LeonGao0117)
 
 ## 🙏 致谢
 
