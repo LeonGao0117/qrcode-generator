@@ -150,7 +150,7 @@ qrcode-generator/
 
 **GaoLiang**
 
-- GitHub: [@你的GitHub用户名](https://github.com/LeonGao0117)
+- GitHub: (https://github.com/LeonGao0117)
 
 ## 🙏 致谢
 
