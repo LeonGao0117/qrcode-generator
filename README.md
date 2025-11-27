@@ -150,7 +150,7 @@ qrcode-generator/
 
 **GaoLiang**
 
-- GitHub: (https://github.com/LeonGao0117)
+- GitHub: [@你的GitHub用户名](https://github.com/LeonGao0117)
 
 ## 🙏 致谢
 
@@ -169,106 +169,49 @@ qrcode-generator/
 - 💾 智能文件命名
 - 🎯 友好的用户提示系统
 
----
+## ❓ 常见问题
 
-<a name="english"></a>
-## 📋 Introduction
+### 手机无法打开页面？
 
-QR Code Card Generator is an easy-to-use web tool that helps you quickly generate beautiful cards with QR codes. It supports custom colors, icons, and text, suitable for various scenarios such as business cards, event promotion, and product display.
+如果在手机上无法打开页面，请尝试以下解决方案：
 
-## ✨ Features
+1. **清除浏览器缓存**
+   - Safari: 设置 → Safari → 清除历史记录与网站数据
+   - Chrome: 设置 → 隐私 → 清除浏览数据
 
-- 🎨 **Customizable Design**
-  - 10+ preset color schemes
-  - Multiple emoji icon options
-  - Custom card title and description
-  
-- 🌐 **Bilingual Support**
-  - One-click switch between Chinese/English
-  - Fully localized text and prompts
-  
-- 📱 **Responsive Design**
-  - Perfect support for mobile and desktop
-  - Adaptive screen size
-  - Touch optimized
-  
-- 💾 **Easy to Save**
-  - Right-click to save generated cards
-  - Auto filename from card title
-  - High-quality output (800x1200px)
-  
-- 🎯 **Smart Prompts**
-  - Auto-fill empty fields with defaults
-  - Beautiful confirmation dialogs
-  - User-friendly guidance
+2. **检查网络连接**
+   - 确保手机已连接到互联网
+   - 尝试切换 WiFi 和移动数据
 
-## 🚀 Quick Start
+3. **更换浏览器**
+   - 尝试使用不同的浏览器（Chrome、Safari、Firefox 等）
+   - 某些内置浏览器可能有兼容性问题
 
-### Online Use
+4. **使用完整链接**
+   - 确保使用完整的 HTTPS 链接
+   - 链接：`https://leongao0117.github.io/qrcode-generator/`
 
-1. Visit the [Demo Page](#) (replace with your GitHub Pages link)
-2. Enter link URL, card title and description
-3. Choose your favorite color and icon
-4. Click "Generate Card" button
-5. Right-click to save the generated card image
+5. **检查是否被防火墙拦截**
+   - 某些企业或学校网络可能拦截 GitHub Pages
+   - 尝试使用其他网络环境
 
-### Local Deployment
+### 二维码生成失败？
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/qrcode-generator.git
+1. **等待页面完全加载**
+   - 首次打开页面时，需要等待资源加载完成
+   - 看到完整的表单后再点击"生成卡片"
 
-# Enter project directory
-cd qrcode-generator
+2. **检查网络连接**
+   - 二维码库需要从 CDN 加载
+   - 页面会自动尝试多个 CDN 源
 
-# Open index.html directly in your browser
-# Or use a local server
-python -m http.server 8000
-# Then visit http://localhost:8000
-```
+3. **刷新页面重试**
+   - 如果第一次失败，刷新页面后再试
 
-## 🛠️ Tech Stack
+### 保存的图片文件名不正确？
 
-- **Frontend**: Pure HTML5 + CSS3 + JavaScript
-- **QR Code**: [QRCode.js](https://davidshimjs.github.io/qrcodejs/)
-- **Fonts**: Google Fonts (Inter + Noto Sans SC)
-- **Design**: Modern glassmorphism + gradient background
-
-## 📝 Use Cases
-
-1. **Business Cards**: Generate personalized cards with personal homepage or social media links
-2. **Event Promotion**: Create promotional cards for event registration links
-3. **Product Marketing**: Make promotional materials for product detail pages
-4. **WiFi Sharing**: Generate QR code cards for WiFi connection info
-
-## 🤝 Contributing
-
-Issues and Pull Requests are welcome!
-
-1. Fork this repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Submit Pull Request
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
-
-## 👤 Author
-
-**GaoLiang**
-
-- GitHub: (https://github.com/yourusername)
-
-## 🙏 Acknowledgments
-
-- [QRCode.js](https://github.com/davidshimjs/qrcodejs) - QR code generation library
-- [Google Fonts](https://fonts.google.com/) - Quality fonts provider
-- All users who provided suggestions and feedback
+- **移动端**：长按图片保存，文件名由系统决定
+- **电脑端**：右键另存为，文件名可能默认为 "Untitled.png"
+  - 建议在保存时手动修改文件名
 
 ---
-
-⭐ If you find this project helpful, please give it a star!
-
-Made with ❤️ by GaoLiang
