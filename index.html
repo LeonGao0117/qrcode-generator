@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Daisy的课堂二维码生成器</title>
+    <title>二维码卡片生成器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -14,20 +17,142 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px 15px;
             margin: 0;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 动态背景装饰 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -10%;
+            right: -5%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 20s ease-in-out infinite;
+            z-index: 0;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -10%;
+            left: -5%;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 15s ease-in-out infinite reverse;
+            z-index: 0;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            33% {
+                transform: translate(30px, -30px) rotate(120deg);
+            }
+            66% {
+                transform: translate(-20px, 20px) rotate(240deg);
+            }
+        }
+        
+        /* 背景装饰点 */
+        .bg-decoration {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .bg-decoration::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            width: 180px;
+            height: 180px;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.06), transparent);
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            animation: morph 10s ease-in-out infinite;
+        }
+        
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            bottom: 15%;
+            right: 15%;
+            width: 220px;
+            height: 220px;
+            background: linear-gradient(225deg, rgba(255, 255, 255, 0.04), transparent);
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            animation: morph 12s ease-in-out infinite reverse;
+        }
+        
+        @keyframes morph {
+            0%, 100% {
+                border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+                transform: rotate(180deg) scale(1.1);
+            }
         }
         
         .container {
             max-width: 600px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         
+        .lang-switch {
+            position: absolute;
+            top: -10px;
+            right: 0;
+            background: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        
+        .lang-switch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            background: #f0f9ff;
+        }
+        
+        @media (max-width: 768px) {
+            .lang-switch {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+            }
+        }
         .header {
             text-align: center;
             color: white;
@@ -36,18 +161,23 @@
         
         .header h1 {
             font-size: 32px;
+            font-weight: 700;
             margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            letter-spacing: -0.5px;
         }
         
         .header p {
             font-size: 16px;
-            opacity: 0.9;
+            font-weight: 400;
+            opacity: 0.95;
+            letter-spacing: 0.2px;
         }
         
         @media (min-width: 768px) {
             .header h1 {
                 font-size: 48px;
+                letter-spacing: -1px;
             }
             .header p {
                 font-size: 18px;
@@ -56,10 +186,22 @@
         
         .input-section {
             background: white;
+            backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 25px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(226, 232, 240, 0.8);
+            position: relative;
+        }
+        
+        .input-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
         }
         
         @media (min-width: 768px) {
@@ -78,6 +220,7 @@
             margin-bottom: 8px;
             color: #333;
             font-size: 14px;
+            letter-spacing: 0.3px;
         }
         
         @media (min-width: 768px) {
@@ -93,7 +236,8 @@
             padding: 12px 16px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
+            font-weight: 400;
             transition: all 0.3s;
             font-family: inherit;
             box-sizing: border-box;
@@ -114,8 +258,8 @@
         .input-group textarea:focus,
         .input-group select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .input-group textarea {
@@ -174,17 +318,19 @@
         }
         
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             border: none;
             padding: 14px 30px;
             font-size: 16px;
             font-weight: 600;
+            letter-spacing: 0.5px;
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
             width: 100%;
             -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
         }
         
         @media (min-width: 768px) {
@@ -196,7 +342,8 @@
         
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         }
         
         .btn:active {
@@ -217,9 +364,21 @@
         
         .preview-section {
             background: white;
+            backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(226, 232, 240, 0.8);
+            position: relative;
+        }
+        
+        .preview-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
         }
         
         @media (min-width: 768px) {
@@ -247,7 +406,7 @@
             margin: 0 auto;
             max-width: 100%;
             height: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
             border-radius: 30px;
         }
         
@@ -256,7 +415,7 @@
             margin: 0 auto;
             max-width: 100%;
             height: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
             border-radius: 30px;
         }
         
@@ -264,12 +423,34 @@
             text-align: center;
             margin-bottom: 20px;
             padding: 20px;
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             border-radius: 15px;
             font-size: 18px;
             font-weight: 600;
-            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .save-tip::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
         }
         
         @media (min-width: 768px) {
@@ -292,61 +473,266 @@
             font-weight: 500;
             letter-spacing: 0.5px;
         }
+        
+        /* 自定义提示框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-box {
+            background: white;
+            border-radius: 20px;
+            padding: 0;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            animation: slideUp 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            padding: 25px 30px;
+            text-align: center;
+        }
+        
+        .modal-icon {
+            font-size: 56px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+        }
+        
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+            letter-spacing: 0.3px;
+        }
+        
+        .modal-content {
+            padding: 30px;
+        }
+        
+        .modal-message {
+            font-size: 15px;
+            font-weight: 400;
+            color: #333;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            letter-spacing: 0.2px;
+        }
+        
+        .modal-list {
+            background: #f0f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e0f2fe;
+        }
+        
+        .modal-list-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .modal-list-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .modal-list-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .modal-list-item-icon {
+            font-size: 18px;
+            margin-right: 12px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .modal-list-item-text {
+            flex: 1;
+        }
+        
+        .modal-list-item-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 4px;
+            letter-spacing: 0.2px;
+        }
+        
+        .modal-list-item-value {
+            font-size: 13px;
+            font-weight: 400;
+            color: #999;
+            font-style: italic;
+            letter-spacing: 0.1px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .modal-btn-cancel {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        
+        .modal-btn-cancel:hover {
+            background: #e2e8f0;
+            transform: translateY(-2px);
+        }
+        
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        
+        .modal-btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.35);
+        }
+        
+        .modal-btn-single {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            width: 100%;
+        }
+        
+        .modal-btn-single:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.35);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- 背景装饰 -->
+    <div class="bg-decoration"></div>
+    
+    <!-- 自定义提示框 -->
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-icon" id="modalIcon">ℹ️</div>
+                <div class="modal-title" id="modalTitle">提示</div>
+            </div>
+            <div class="modal-content">
+                <div id="modalBody"></div>
+                <div class="modal-buttons" id="modalButtons"></div>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
+        <button class="lang-switch" onclick="toggleLanguage()">
+            <span id="langText">EN</span>
+        </button>
+        
         <div class="header">
-            <h1>🎨 Daisy的课堂二维码生成器</h1>
-            <p>输入信息，一键生成带二维码的精美卡片</p>
+            <h1 data-zh="🎨 二维码卡片生成器" data-en="🎨 QR Code Card Generator">🎨 二维码卡片生成器</h1>
+            <p data-zh="输入信息，一键生成带二维码的精美卡片" data-en="Enter information to generate beautiful cards with QR codes">输入信息，一键生成带二维码的精美卡片</p>
         </div>
         
         <div class="input-section">
-            <h2 style="margin-bottom: 30px; color: #333;">📝 填写卡片信息</h2>
+            <h2 style="margin-bottom: 30px; color: #333;" data-zh="📝 填写卡片信息" data-en="📝 Fill in Card Information">📝 填写卡片信息</h2>
             
             <div class="input-group">
-                <label>🔗 链接地址 *</label>
-                <input type="url" id="linkUrl" placeholder="https://your-link-here.com" value="https://hammerhead-hope-47d.notion.site/Liam-s-class-minutes-2ada6bc9434c806ba2d6c09686a10e54">
+                <label data-zh="🔗 链接地址" data-en="🔗 Link URL">🔗 链接地址</label>
+                <input type="url" id="linkUrl" data-placeholder-zh="https://your-link-here.com" data-placeholder-en="https://your-link-here.com" placeholder="https://your-link-here.com" value="">
             </div>
             
             <div class="input-group">
-                <label>📌 卡片标题 *</label>
-                <input type="text" id="cardTitle" placeholder="例如：Liam 的课堂纪要" value="Liam 的课堂纪要">
+                <label data-zh="📌 卡片标题" data-en="📌 Card Title">📌 卡片标题</label>
+                <input type="text" id="cardTitle" data-placeholder-zh="例如：我的个人主页" data-placeholder-en="e.g., My Personal Homepage" placeholder="例如：我的个人主页" value="">
             </div>
             
             <div class="input-group">
-                <label>📄 卡片描述</label>
-                <textarea id="cardDesc" placeholder="例如：本周课堂重点内容总结与后续任务安排">本周课堂重点内容总结与后续任务安排</textarea>
+                <label data-zh="📄 卡片描述" data-en="📄 Card Description">📄 卡片描述</label>
+                <textarea id="cardDesc" data-placeholder-zh="例如：欢迎访问我的个人主页，了解更多精彩内容" data-placeholder-en="e.g., Welcome to my homepage for more exciting content" placeholder="例如：欢迎访问我的个人主页，了解更多精彩内容"></textarea>
             </div>
             
             <div class="input-group">
-                <label>😊 图标 Emoji（可选）</label>
+                <label data-zh="😊 图标 Emoji（可选）" data-en="😊 Icon Emoji (Optional)">😊 图标 Emoji（可选）</label>
                 <select class="input-field" id="cardIcon">
-                    <option value="📚">📚 书本</option>
-                    <option value="📝">📝 笔记</option>
-                    <option value="🎓">🎓 毕业帽</option>
-                    <option value="✏️">✏️ 铅笔</option>
-                    <option value="📖">📖 打开的书</option>
-                    <option value="🎯">🎯 目标</option>
-                    <option value="💡">💡 灯泡</option>
-                    <option value="🌟">🌟 星星</option>
-                    <option value="🎨">🎨 调色板</option>
-                    <option value="🎵">🎵 音符</option>
-                    <option value="⚡">⚡ 闪电</option>
-                    <option value="🔥">🔥 火焰</option>
-                    <option value="💎">💎 钻石</option>
-                    <option value="🎁">🎁 礼物</option>
-                    <option value="🌈">🌈 彩虹</option>
-                    <option value="🚀">🚀 火箭</option>
-                    <option value="❤️">❤️ 爱心</option>
-                    <option value="⭐">⭐ 星星</option>
-                    <option value="🎉">🎉 庆祝</option>
-                    <option value="🌸">🌸 花朵</option>
+                    <option value="" data-zh="无" data-en="None" selected>无</option>
+                    <option value="📚" data-zh="📚 书本" data-en="📚 Book">📚 书本</option>
+                    <option value="📝" data-zh="📝 笔记" data-en="📝 Note">📝 笔记</option>
+                    <option value="🎓" data-zh="🎓 毕业帽" data-en="🎓 Graduation Cap">🎓 毕业帽</option>
+                    <option value="✏️" data-zh="✏️ 铅笔" data-en="✏️ Pencil">✏️ 铅笔</option>
+                    <option value="📖" data-zh="📖 打开的书" data-en="📖 Open Book">📖 打开的书</option>
+                    <option value="🎯" data-zh="🎯 目标" data-en="🎯 Target">🎯 目标</option>
+                    <option value="💡" data-zh="💡 灯泡" data-en="💡 Light Bulb">💡 灯泡</option>
+                    <option value="🌟" data-zh="🌟 星星" data-en="🌟 Star">🌟 星星</option>
+                    <option value="🎨" data-zh="🎨 调色板" data-en="🎨 Palette">🎨 调色板</option>
+                    <option value="🎵" data-zh="🎵 音符" data-en="🎵 Music Note">🎵 音符</option>
+                    <option value="⚡" data-zh="⚡ 闪电" data-en="⚡ Lightning">⚡ 闪电</option>
+                    <option value="🔥" data-zh="🔥 火焰" data-en="🔥 Fire">🔥 火焰</option>
+                    <option value="💎" data-zh="💎 钻石" data-en="💎 Diamond">💎 钻石</option>
+                    <option value="🎁" data-zh="🎁 礼物" data-en="🎁 Gift">🎁 礼物</option>
+                    <option value="🌈" data-zh="🌈 彩虹" data-en="🌈 Rainbow">🌈 彩虹</option>
+                    <option value="🚀" data-zh="🚀 火箭" data-en="🚀 Rocket">🚀 火箭</option>
+                    <option value="❤️" data-zh="❤️ 爱心" data-en="❤️ Heart">❤️ 爱心</option>
+                    <option value="⭐" data-zh="⭐ 星星" data-en="⭐ Star">⭐ 星星</option>
+                    <option value="🎉" data-zh="🎉 庆祝" data-en="🎉 Celebration">🎉 庆祝</option>
+                    <option value="🌸" data-zh="🌸 花朵" data-en="🌸 Flower">🌸 花朵</option>
                 </select>
             </div>
             
             <div class="input-group">
-                <label>🎨 选择配色方案</label>
+                <label data-zh="🎨 选择配色方案" data-en="🎨 Select Color Scheme">🎨 选择配色方案</label>
                 <div class="color-picker">
                     <div class="color-option active" data-color1="#667eea" data-color2="#764ba2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
                     <div class="color-option" data-color1="#f093fb" data-color2="#f5576c" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
@@ -359,14 +745,15 @@
                 </div>
             </div>
             
-            <button class="btn" onclick="generateCard()">✨ 生成卡片</button>
+            <button class="btn" onclick="generateCard()" data-zh="✨ 生成卡片" data-en="✨ Generate Card">✨ 生成卡片</button>
         </div>
         
         <div class="preview-section" id="previewSection" style="display: none;">
-            <h2>👀 卡片预览</h2>
+            <h2 data-zh="👀 卡片预览" data-en="👀 Card Preview">👀 卡片预览</h2>
             
             <div class="save-tip">
-                📱 长按下方图片可保存到相册
+                <span data-zh="📱 移动端：长按图片可保存到相册" data-en="📱 Mobile: Long press to save">📱 移动端：长按图片可保存到相册</span><br>
+                <span data-zh="💻 电脑端：右键图片另存为" data-en="💻 PC: Right-click to save">💻 电脑端：右键图片另存为</span>
             </div>
             
             <img id="cardImage" style="display: none;" alt="二维码卡片">
@@ -377,25 +764,224 @@
     <!-- 作者信息 -->
     <div class="container">
         <div class="author-section">
-            <p>Created by Gao Liang © 2025</p>
+            <p>QRCode Generator Tool by GaoLiang © 2025</p>
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
+    <!-- 二维码库加载 - 使用多个CDN备份 -->
     <script>
-        // 检测 QRCode 库是否加载成功，如果失败则尝试备用CDN
-        window.addEventListener('load', function() {
-            if (typeof QRCode === 'undefined') {
-                console.warn('主CDN加载失败，尝试备用CDN...');
-                const script = document.createElement('script');
-                script.src = 'https://unpkg.com/qrcodejs2@0.0.2/qrcode.min.js';
-                script.onerror = function() {
+        // 动态加载二维码库，支持多个CDN备份
+        (function loadQRCodeLibrary() {
+            const cdnList = [
+                'https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js',
+                'https://unpkg.com/qrcodejs2@0.0.2/qrcode.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+                'https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+            ];
+            
+            let currentCDN = 0;
+            
+            function tryLoadFromCDN() {
+                if (currentCDN >= cdnList.length) {
                     console.error('所有CDN均加载失败');
-                    alert('二维码库加载失败，请检查网络连接或刷新页面！');
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = cdnList[currentCDN];
+                script.async = false;
+                
+                script.onload = function() {
+                    console.log('QRCode库加载成功，来源：' + cdnList[currentCDN]);
                 };
+                
+                script.onerror = function() {
+                    console.warn('CDN加载失败：' + cdnList[currentCDN]);
+                    currentCDN++;
+                    tryLoadFromCDN();
+                };
+                
                 document.head.appendChild(script);
             }
+            
+            tryLoadFromCDN();
+        })();
+    </script>
+    
+    <script>
+        // 语言管理
+        let currentLang = 'zh';
+        
+        // 语言文本配置
+        const langTexts = {
+            zh: {
+                alertQRFailed: '二维码库加载失败，请刷新页面重试！',
+                loadingQR: '正在生成二维码...',
+                alertGenFailed: '二维码生成失败，请检查网络连接或稍后重试！\n\n错误信息：',
+                qrCodeText: '👆 长按识别二维码查看详细内容',
+                defaultDesc: '扫描下方二维码查看详细内容',
+                defaultUrl: 'https://example.com',
+                defaultTitle: '我的二维码卡片',
+                defaultDescText: '欢迎扫描二维码',
+                confirmDefaultTitle: '使用默认值',
+                confirmDefaultMsg: '以下字段未填写，将使用默认值：',
+                confirmUrlLabel: '链接地址',
+                confirmUrlValue: '将使用示例链接',
+                confirmTitleLabel: '卡片标题',
+                confirmTitleValue: '将使用默认标题',
+                confirmDescLabel: '卡片描述',
+                confirmDescValue: '将使用默认描述',
+                confirmBtnYes: '继续生成',
+                confirmBtnNo: '取消',
+                alertBtn: '确定',
+                alertTitle: '提示'
+            },
+            en: {
+                alertQRFailed: 'QR code library failed to load, please refresh!',
+                loadingQR: 'Generating QR code...',
+                alertGenFailed: 'Failed to generate QR code. Please check network or try again!\n\nError: ',
+                qrCodeText: '👆 Long press to scan QR code',
+                defaultDesc: 'Scan the QR code below for details',
+                defaultUrl: 'https://example.com',
+                defaultTitle: 'My QR Code Card',
+                defaultDescText: 'Welcome to scan the QR code',
+                confirmDefaultTitle: 'Use Default Values',
+                confirmDefaultMsg: 'The following fields are empty and will use default values:',
+                confirmUrlLabel: 'Link URL',
+                confirmUrlValue: 'Will use example link',
+                confirmTitleLabel: 'Card Title',
+                confirmTitleValue: 'Will use default title',
+                confirmDescLabel: 'Card Description',
+                confirmDescValue: 'Will use default description',
+                confirmBtnYes: 'Continue',
+                confirmBtnNo: 'Cancel',
+                alertBtn: 'OK',
+                alertTitle: 'Notice'
+            }
+        };
+        
+        // 自定义 Alert 函数
+        function customAlert(message, icon = 'ℹ️') {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customModal');
+                const modalIcon = document.getElementById('modalIcon');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalBody = document.getElementById('modalBody');
+                const modalButtons = document.getElementById('modalButtons');
+                
+                modalIcon.textContent = icon;
+                modalTitle.textContent = langTexts[currentLang].alertTitle;
+                modalBody.innerHTML = `<div class="modal-message">${message}</div>`;
+                modalButtons.innerHTML = `
+                    <button class="modal-btn modal-btn-single" onclick="closeModal(true)">
+                        ${langTexts[currentLang].alertBtn}
+                    </button>
+                `;
+                
+                modal.classList.add('show');
+                
+                window.modalResolve = resolve;
+            });
+        }
+        
+        // 自定义 Confirm 函数（用于默认值确认）
+        function customConfirmDefaults(emptyFields) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customModal');
+                const modalIcon = document.getElementById('modalIcon');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalBody = document.getElementById('modalBody');
+                const modalButtons = document.getElementById('modalButtons');
+                
+                modalIcon.textContent = '💡';
+                modalTitle.textContent = langTexts[currentLang].confirmDefaultTitle;
+                
+                // 构建列表项
+                let listItems = '';
+                emptyFields.forEach(field => {
+                    const icons = {
+                        url: '🔗',
+                        title: '📌',
+                        desc: '📄'
+                    };
+                    const icon = icons[field] || '•';
+                    const labelKey = `confirm${field.charAt(0).toUpperCase() + field.slice(1)}Label`;
+                    const valueKey = `confirm${field.charAt(0).toUpperCase() + field.slice(1)}Value`;
+                    
+                    listItems += `
+                        <div class="modal-list-item">
+                            <div class="modal-list-item-icon">${icon}</div>
+                            <div class="modal-list-item-text">
+                                <div class="modal-list-item-label">${langTexts[currentLang][labelKey]}</div>
+                                <div class="modal-list-item-value">${langTexts[currentLang][valueKey]}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                modalBody.innerHTML = `
+                    <div class="modal-message">${langTexts[currentLang].confirmDefaultMsg}</div>
+                    <div class="modal-list">
+                        ${listItems}
+                    </div>
+                `;
+                
+                modalButtons.innerHTML = `
+                    <button class="modal-btn modal-btn-cancel" onclick="closeModal(false)">
+                        ${langTexts[currentLang].confirmBtnNo}
+                    </button>
+                    <button class="modal-btn modal-btn-confirm" onclick="closeModal(true)">
+                        ${langTexts[currentLang].confirmBtnYes}
+                    </button>
+                `;
+                
+                modal.classList.add('show');
+                
+                window.modalResolve = resolve;
+            });
+        }
+        
+        // 关闭模态框
+        function closeModal(result) {
+            const modal = document.getElementById('customModal');
+            modal.classList.remove('show');
+            if (window.modalResolve) {
+                window.modalResolve(result);
+                window.modalResolve = null;
+            }
+        }
+        
+        // 点击背景关闭
+        document.getElementById('customModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal(false);
+            }
         });
+        
+        // 切换语言
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.getElementById('langText').textContent = currentLang === 'zh' ? 'EN' : '中文';
+            
+            // 更新所有带有 data-zh 和 data-en 属性的元素文本
+            document.querySelectorAll('[data-zh][data-en]').forEach(el => {
+                const text = el.getAttribute('data-' + currentLang);
+                // 对于其他元素（包括 label, option, span 等），直接更新文本
+                el.textContent = text;
+            });
+            
+            // 更新所有带有 data-placeholder 属性的 input 和 textarea
+            document.querySelectorAll('input[data-placeholder-zh][data-placeholder-en], textarea[data-placeholder-zh][data-placeholder-en]').forEach(el => {
+                const placeholderAttr = 'data-placeholder-' + currentLang;
+                el.placeholder = el.getAttribute(placeholderAttr);
+            });
+            
+            // 更新 HTML lang 属性
+            document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+            
+            // 更新 title
+            document.title = currentLang === 'zh' ? '二维码卡片生成器' : 'QR Code Card Generator';
+        }
         
         let selectedColor1 = '#667eea';
         let selectedColor2 = '#764ba2';
@@ -412,29 +998,57 @@
         
         // 生成卡片
         async function generateCard() {
-            const url = document.getElementById('linkUrl').value.trim();
-            const title = document.getElementById('cardTitle').value.trim();
-            const desc = document.getElementById('cardDesc').value.trim();
-            const icon = document.getElementById('cardIcon').value || '📚';
+            let url = document.getElementById('linkUrl').value.trim();
+            let title = document.getElementById('cardTitle').value.trim();
+            let desc = document.getElementById('cardDesc').value.trim();
+            const icon = document.getElementById('cardIcon').value || '';
+            
+            // 检查是否有空字段，收集提醒信息
+            let emptyFields = [];
             
             if (!url) {
-                alert('请输入链接地址！');
-                return;
+                emptyFields.push('url');
+                url = langTexts[currentLang].defaultUrl;
             }
             
             if (!title) {
-                alert('请输入卡片标题！');
-                return;
+                emptyFields.push('title');
+                title = langTexts[currentLang].defaultTitle;
             }
             
-            // 检查 QRCode 库是否加载
+            if (!desc) {
+                emptyFields.push('desc');
+                desc = langTexts[currentLang].defaultDescText;
+            }
+            
+            // 如果有空字段，显示确认提示
+            if (emptyFields.length > 0) {
+                const confirmed = await customConfirmDefaults(emptyFields);
+                if (!confirmed) {
+                    return;
+                }
+            }
+            
+            // 检查 QRCode 库是否加载，如果未加载则等待
             if (typeof QRCode === 'undefined') {
-                alert('二维码库加载失败，请刷新页面重试！');
-                return;
+                // 尝试等待库加载（最多等待5秒）
+                let waitCount = 0;
+                const maxWait = 50; // 5秒（100ms * 50）
+                
+                while (typeof QRCode === 'undefined' && waitCount < maxWait) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    waitCount++;
+                }
+                
+                // 如果还是未加载，显示错误
+                if (typeof QRCode === 'undefined') {
+                    await customAlert(langTexts[currentLang].alertQRFailed, '⚠️');
+                    return;
+                }
             }
             
             // 显示加载提示
-            const loadingToast = showLoading('正在生成二维码...');
+            const loadingToast = showLoading(langTexts[currentLang].loadingQR);
             
             // 显示预览区域
             document.getElementById('previewSection').style.display = 'block';
@@ -462,10 +1076,18 @@
                     throw new Error('Image元素未找到');
                 }
                 
-                const finalImageUrl = canvas.toDataURL('image/png', 1.0);
-                cardImage.src = finalImageUrl;
+                // 设置安全的文件名
+                const safeFileName = title.replace(/[<>:"/\\|?*]/g, '_');
+                
+                // 将 Canvas 转换为 Data URL
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+                
+                // 设置图片
+                cardImage.src = dataUrl;
+                cardImage.alt = safeFileName;
                 cardImage.style.display = 'block';
-                canvas.style.display = 'none';  // 隐藏 Canvas，显示图片
+                
+                canvas.style.display = 'none';  // 隐藏 Canvas
                 
                 // 关闭加载提示
                 hideLoading(loadingToast);
@@ -478,7 +1100,7 @@
             } catch (error) {
                 console.error('生成失败:', error);
                 hideLoading(loadingToast);
-                alert('二维码生成失败，请检查网络连接或稍后重试！\n\n错误信息：' + error.message);
+                await customAlert(langTexts[currentLang].alertGenFailed + error.message, '❌');
                 document.getElementById('previewSection').style.display = 'none';
             }
         }
@@ -503,9 +1125,9 @@
                         correctLevel: QRCode.CorrectLevel.H
                     });
                     
-                    // 等待二维码生成（多次尝试，最多等待3秒）
+                    // 等待二维码生成（增加等待时间到6秒，针对手机端优化）
                     let attempts = 0;
-                    const maxAttempts = 30;
+                    const maxAttempts = 60; // 6秒 (100ms * 60)
                     
                     const checkQRCode = () => {
                         attempts++;
@@ -514,14 +1136,16 @@
                         const qrcodeImg = tempDiv.querySelector('img');
                         
                         // 优先使用 canvas
-                        if (qrcodeCanvas) {
+                        if (qrcodeCanvas && qrcodeCanvas.width > 0 && qrcodeCanvas.height > 0) {
                             try {
                                 const dataUrl = qrcodeCanvas.toDataURL('image/png');
-                                if (document.body.contains(tempDiv)) {
-                                    document.body.removeChild(tempDiv);
+                                if (dataUrl && dataUrl.length > 100) { // 确保数据有效
+                                    if (document.body.contains(tempDiv)) {
+                                        document.body.removeChild(tempDiv);
+                                    }
+                                    resolve(dataUrl);
+                                    return;
                                 }
-                                resolve(dataUrl);
-                                return;
                             } catch (e) {
                                 console.error('Canvas转换失败:', e);
                             }
@@ -554,12 +1178,12 @@
                             if (document.body.contains(tempDiv)) {
                                 document.body.removeChild(tempDiv);
                             }
-                            reject(new Error('二维码生成超时（等待3秒后未检测到二维码元素）'));
+                            reject(new Error('二维码生成超时（等待6秒后未检测到有效的二维码数据）'));
                         }
                     };
                     
-                    // 开始检查
-                    setTimeout(checkQRCode, 100);
+                    // 首次检查延迟200ms，给库更多初始化时间
+                    setTimeout(checkQRCode, 200);
                     
                 } catch (error) {
                     if (document.body.contains(tempDiv)) {
@@ -593,25 +1217,28 @@
                 ctx.fillStyle = radialGradient;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // 绘制图标
-                ctx.font = '80px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = 'white';
-                ctx.fillText(icon, canvas.width / 2, 150);
+                // 绘制图标（如果有）
+                if (icon) {
+                    ctx.font = '80px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = 'white';
+                    ctx.fillText(icon, canvas.width / 2, 150);
+                }
                 
                 // 绘制标题
                 ctx.font = 'bold 42px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'white';
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
                 ctx.shadowBlur = 10;
                 ctx.shadowOffsetY = 2;
-                ctx.fillText(title, canvas.width / 2, 230);
+                ctx.fillText(title, canvas.width / 2, icon ? 230 : 180);
                 
                 // 绘制描述
                 ctx.font = '18px Arial, sans-serif';
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetY = 0;
-                const descText = desc || '扫描下方二维码查看详细内容';
-                wrapText(ctx, descText, canvas.width / 2, 280, canvas.width - 100, 30);
+                wrapText(ctx, desc, canvas.width / 2, icon ? 280 : 230, canvas.width - 100, 30);
                 
                 // 绘制二维码白色背景
                 ctx.fillStyle = 'white';
@@ -631,12 +1258,12 @@
                     // 绘制提示文字
                     ctx.font = 'bold 22px Arial, sans-serif';
                     ctx.fillStyle = 'white';
-                    ctx.fillText('👆 长按识别二维码查看详细内容', canvas.width / 2, 720);
+                    ctx.fillText(langTexts[currentLang].qrCodeText, canvas.width / 2, 720);
                     
                     // 绘制底部文字
                     ctx.font = '14px Arial';
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    ctx.fillText('© 2025 Generated by Gao Liang', canvas.width / 2, 850);
+                    ctx.fillText('QRCode Generator Tool by GaoLiang © 2025', canvas.width / 2, 850);
                     
                     resolve();
                 };
