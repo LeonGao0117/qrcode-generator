@@ -6,10 +6,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>二维码卡片生成器</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- 字体加载优化：异步加载，失败不阻塞页面 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+    <!-- 使用 media="print" 技巧实现异步加载 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'; this.onload=null;">
+    <!-- 如果 JavaScript 被禁用，则正常加载字体 -->
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </noscript>
     <style>
         * {
             margin: 0;
@@ -657,9 +662,65 @@
                 transform: translateY(0);
             }
         }
+        
+        /* 页面加载指示器 */
+        #pageLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        
+        #pageLoader.loaded {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loader-text {
+            color: white;
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        .loader-progress {
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
+    <!-- 页面加载指示器 -->
+    <div id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">正在加载资源...</div>
+        <div class="loader-progress" id="loaderProgress">0%</div>
+    </div>
+    
     <!-- 背景装饰 -->
     <div class="bg-decoration"></div>
     
@@ -771,6 +832,34 @@
     
     <!-- 二维码库加载 - 使用多个CDN备份 -->
     <script>
+        // 页面加载进度管理
+        let loadProgress = 0;
+        const loaderProgressEl = document.getElementById('loaderProgress');
+        const pageLoaderEl = document.getElementById('pageLoader');
+        
+        function updateProgress(percent, text) {
+            loadProgress = percent;
+            if (loaderProgressEl) {
+                loaderProgressEl.textContent = Math.round(percent) + '%';
+            }
+            const loaderText = document.querySelector('.loader-text');
+            if (loaderText && text) {
+                loaderText.textContent = text;
+            }
+        }
+        
+        function hideLoader() {
+            if (pageLoaderEl) {
+                pageLoaderEl.classList.add('loaded');
+                setTimeout(() => {
+                    pageLoaderEl.style.display = 'none';
+                }, 500);
+            }
+        }
+        
+        // 初始进度
+        updateProgress(10, '正在连接服务器...');
+        
         // 动态加载二维码库，支持多个CDN备份
         (function loadQRCodeLibrary() {
             const cdnList = [
@@ -785,8 +874,12 @@
             function tryLoadFromCDN() {
                 if (currentCDN >= cdnList.length) {
                     console.error('所有CDN均加载失败');
+                    updateProgress(100, '⚠️ 资源加载失败，但页面仍可使用');
+                    setTimeout(hideLoader, 1500);
                     return;
                 }
+                
+                updateProgress(30 + (currentCDN * 15), `正在加载资源 (${currentCDN + 1}/${cdnList.length})...`);
                 
                 const script = document.createElement('script');
                 script.src = cdnList[currentCDN];
@@ -794,6 +887,11 @@
                 
                 script.onload = function() {
                     console.log('QRCode库加载成功，来源：' + cdnList[currentCDN]);
+                    updateProgress(80, '资源加载完成');
+                    setTimeout(() => {
+                        updateProgress(100, '✓ 准备就绪');
+                        setTimeout(hideLoader, 500);
+                    }, 300);
                 };
                 
                 script.onerror = function() {
@@ -807,6 +905,45 @@
             
             tryLoadFromCDN();
         })();
+        
+        // 监听 DOM 加载完成
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                updateProgress(50, '页面加载完成...');
+            });
+        } else {
+            updateProgress(50, '页面加载完成...');
+        }
+        
+        // 监听所有资源加载完成（包括图片、字体等）
+        window.addEventListener('load', function() {
+            updateProgress(90, '最后准备...');
+            // 如果二维码库还没加载完，等待一下
+            setTimeout(function() {
+                if (typeof QRCode === 'undefined') {
+                    updateProgress(95, '正在等待资源...');
+                } else {
+                    updateProgress(100, '✓ 准备就绪');
+                    setTimeout(hideLoader, 500);
+                }
+            }, 500);
+        });
+        
+        // 超时保护：如果10秒后还在加载，强制隐藏加载器并显示提示
+        setTimeout(function() {
+            if (pageLoaderEl && !pageLoaderEl.classList.contains('loaded')) {
+                console.warn('页面加载超时，强制显示页面');
+                updateProgress(100, '⚠️ 加载较慢，已强制显示页面');
+                setTimeout(hideLoader, 1000);
+                
+                // 显示一个友好的提示
+                setTimeout(function() {
+                    if (typeof customAlert !== 'undefined') {
+                        customAlert('页面加载较慢，可能是网络原因。\n\n如果功能异常，请刷新页面重试。', 'ℹ️');
+                    }
+                }, 1500);
+            }
+        }, 10000); // 10秒超时
     </script>
     
     <script>
