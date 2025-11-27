@@ -259,8 +259,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 **GaoLiang**
 
-- GitHub: [@YourUsername](https://github.com/yourusername)
-- Email: your.email@example.com
+- GitHub: (https://github.com/yourusername)
 
 ## 🙏 Acknowledgments
 
