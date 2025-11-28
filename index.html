@@ -1233,9 +1233,18 @@
                 // 关闭加载提示
                 hideLoading(loadingToast);
                 
-                // 滚动到预览区域
+                // 滚动到预览区域（iOS 兼容性优化）
                 setTimeout(() => {
-                    document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const previewSection = document.getElementById('previewSection');
+                    if (previewSection) {
+                        // iOS Safari 兼容性：降级处理
+                        try {
+                            previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } catch (e) {
+                            // 降级到不带动画的滚动
+                            previewSection.scrollIntoView(true);
+                        }
+                    }
                 }, 100);
                 
             } catch (error) {
@@ -1350,11 +1359,24 @@
             });
         }
         
-        // 绘制卡片到 Canvas
+        // 绘制卡片到 Canvas（iOS 兼容性优化）
         async function drawCardToCanvas(title, desc, icon, qrcodeDataUrl) {
             return new Promise((resolve, reject) => {
                 const canvas = document.getElementById('cardCanvas');
-                const ctx = canvas.getContext('2d');
+                if (!canvas) {
+                    reject(new Error('Canvas 元素未找到'));
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d', { 
+                    alpha: true,
+                    willReadFrequently: false // iOS 性能优化
+                });
+                
+                if (!ctx) {
+                    reject(new Error('无法获取 Canvas 上下文'));
+                    return;
+                }
                 
                 // 清空画布
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1406,27 +1428,47 @@
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetY = 0;
                 
-                // 从 base64 加载并绘制二维码
+                // 从 base64 加载并绘制二维码（iOS 兼容性优化）
                 const qrImage = new Image();
+                
+                // 添加超时保护（iOS 可能加载慢）
+                const imageLoadTimeout = setTimeout(() => {
+                    console.error('二维码图片加载超时');
+                    reject(new Error('二维码图片加载超时（iOS 兼容性问题）'));
+                }, 10000); // 10秒超时
+                
                 qrImage.onload = function() {
-                    ctx.drawImage(qrImage, (canvas.width - 250) / 2, 385, 250, 250);
+                    clearTimeout(imageLoadTimeout);
                     
-                    // 绘制提示文字
-                    ctx.font = 'bold 22px Arial, sans-serif';
-                    ctx.fillStyle = 'white';
-                    ctx.fillText(langTexts[currentLang].qrCodeText, canvas.width / 2, 720);
-                    
-                    // 绘制底部文字
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    ctx.fillText('QRCode Generator Tool by GaoLiang © 2025', canvas.width / 2, 850);
-                    
-                    resolve();
+                    try {
+                        ctx.drawImage(qrImage, (canvas.width - 250) / 2, 385, 250, 250);
+                        
+                        // 绘制提示文字
+                        ctx.font = 'bold 22px Arial, sans-serif';
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(langTexts[currentLang].qrCodeText, canvas.width / 2, 720);
+                        
+                        // 绘制底部文字
+                        ctx.font = '14px Arial';
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.fillText('QRCode Generator Tool by GaoLiang © 2025', canvas.width / 2, 850);
+                        
+                        resolve();
+                    } catch (e) {
+                        clearTimeout(imageLoadTimeout);
+                        console.error('Canvas 绘制失败:', e);
+                        reject(new Error('Canvas 绘制失败: ' + e.message));
+                    }
                 };
-                qrImage.onerror = function() {
-                    console.error('二维码图片加载失败');
+                
+                qrImage.onerror = function(e) {
+                    clearTimeout(imageLoadTimeout);
+                    console.error('二维码图片加载失败:', e);
                     reject(new Error('二维码图片加载失败'));
                 };
+                
+                // iOS Safari 需要明确设置 crossOrigin
+                qrImage.crossOrigin = 'anonymous';
                 qrImage.src = qrcodeDataUrl;
             });
         }
