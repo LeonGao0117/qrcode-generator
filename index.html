@@ -827,13 +827,14 @@
         </div>
     </div>
     
-    <!-- 本地加载二维码库和html2canvas库 - 无需网络连接 -->
+    <!-- 本地加载二维码库 - 关键资源同步加载 -->
     <script src="qrcode.min.js"></script>
-    <script src="html2canvas.min.js"></script>
     
     <script>
         // 页面加载进度管理
         let loadProgress = 0;
+        let qrCodeLibReady = false;
+        let html2canvasLibReady = false;
         const loaderProgressEl = document.getElementById('loaderProgress');
         const pageLoaderEl = document.getElementById('pageLoader');
         
@@ -857,42 +858,90 @@
             }
         }
         
+        // 检查库是否加载成功
+        function checkLibrariesLoaded() {
+            // 检查 QRCode 库
+            if (typeof QRCode !== 'undefined') {
+                qrCodeLibReady = true;
+                console.log('✓ QRCode 库加载成功');
+            }
+            
+            // 检查 html2canvas 库（可选）
+            if (typeof html2canvas !== 'undefined') {
+                html2canvasLibReady = true;
+                console.log('✓ html2canvas 库加载成功');
+            }
+            
+            // 只要 QRCode 加载成功即可
+            if (qrCodeLibReady) {
+                updateProgress(100, '✓ 准备就绪');
+                setTimeout(hideLoader, 300);
+                return true;
+            }
+            
+            return false;
+        }
+        
         // 初始进度
-        updateProgress(30, '正在加载本地资源...');
+        updateProgress(20, '正在加载资源...');
+        
+        // 立即检查一次（QRCode 已同步加载）
+        setTimeout(function() {
+            updateProgress(50, '检查资源...');
+            checkLibrariesLoaded();
+        }, 50);
+        
+        // 异步加载 html2canvas（非关键资源）
+        (function() {
+            const script = document.createElement('script');
+            script.src = 'html2canvas.min.js';
+            script.async = true;
+            script.onload = function() {
+                html2canvasLibReady = true;
+                console.log('✓ html2canvas 加载成功（异步）');
+            };
+            script.onerror = function() {
+                console.warn('html2canvas 加载失败（不影响核心功能）');
+            };
+            document.head.appendChild(script);
+        })();
         
         // 监听 DOM 加载完成
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
-                updateProgress(70, '页面加载完成...');
+                updateProgress(70, '页面准备中...');
+                setTimeout(checkLibrariesLoaded, 100);
             });
         } else {
-            updateProgress(70, '页面加载完成...');
+            updateProgress(70, '页面准备中...');
+            setTimeout(checkLibrariesLoaded, 100);
         }
         
-        // 监听所有资源加载完成（包括图片、字体等）
+        // 监听所有资源加载完成
         window.addEventListener('load', function() {
-            updateProgress(90, '最后准备...');
-            // 快速检查库是否加载成功
+            updateProgress(90, '最后检查...');
             setTimeout(function() {
-                if (typeof QRCode === 'undefined') {
-                    console.error('QRCode库加载失败');
-                    updateProgress(100, '⚠️ 资源加载失败');
-                } else {
-                    console.log('所有资源加载成功（本地模式）');
-                    updateProgress(100, '✓ 准备就绪');
+                if (!checkLibrariesLoaded()) {
+                    // 如果还是没加载成功，显示警告但允许使用
+                    console.error('关键库未加载，页面功能可能受限');
+                    updateProgress(100, '⚠️ 部分资源未加载');
+                    setTimeout(hideLoader, 500);
                 }
-                setTimeout(hideLoader, 300);
-            }, 100);
+            }, 200);
         });
         
-        // 超时保护：如果3秒后还在加载，强制隐藏加载器
+        // 超时保护：2秒后强制完成（缩短超时时间）
         setTimeout(function() {
             if (pageLoaderEl && !pageLoaderEl.classList.contains('loaded')) {
-                console.warn('页面加载超时，强制显示页面');
-                updateProgress(100, '✓ 已加载');
+                console.warn('强制完成加载');
+                if (typeof QRCode !== 'undefined') {
+                    updateProgress(100, '✓ 已加载');
+                } else {
+                    updateProgress(100, '⚠️ 请刷新页面');
+                }
                 setTimeout(hideLoader, 300);
             }
-        }, 3000); // 缩短为3秒
+        }, 2000); // 从3秒缩短到2秒
     </script>
     
     <script>
@@ -1085,6 +1134,17 @@
         
         // 生成卡片
         async function generateCard() {
+            // 检查页面是否完全就绪
+            if (!pageReady) {
+                console.log('页面尚未完全就绪，等待中...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                if (!pageReady && typeof QRCode === 'undefined') {
+                    await customAlert('⏳ 页面加载中，请稍候再试...', 'ℹ️');
+                    return;
+                }
+            }
+            
             let url = document.getElementById('linkUrl').value.trim();
             let title = document.getElementById('cardTitle').value.trim();
             let desc = document.getElementById('cardDesc').value.trim();
@@ -1116,11 +1176,16 @@
                 }
             }
             
-            // 检查 QRCode 库是否加载（本地加载模式，应该即时可用）
+            // 检查 QRCode 库是否加载
             if (typeof QRCode === 'undefined') {
-                // 本地加载失败，直接提示刷新页面
-                await customAlert(langTexts[currentLang].alertQRFailed + '<br><br>建议：刷新页面重试', '⚠️');
-                return;
+                // 尝试等待一下（给安卓浏览器更多时间）
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // 再次检查
+                if (typeof QRCode === 'undefined') {
+                    await customAlert(langTexts[currentLang].alertQRFailed + '<br><br>🔄 请刷新页面重试', '⚠️');
+                    return;
+                }
             }
             
             // 显示加载提示
@@ -1181,9 +1246,15 @@
             }
         }
         
-        // 生成二维码并返回 base64 数据
+        // 生成二维码并返回 base64 数据（优化安卓兼容性）
         async function generateQRCode(url) {
             return new Promise((resolve, reject) => {
+                // 清理可能存在的旧临时容器
+                const oldTemp = document.getElementById('tempQrcode');
+                if (oldTemp && document.body.contains(oldTemp)) {
+                    document.body.removeChild(oldTemp);
+                }
+                
                 // 创建临时容器
                 const tempDiv = document.createElement('div');
                 tempDiv.id = 'tempQrcode';
@@ -1191,6 +1262,11 @@
                 document.body.appendChild(tempDiv);
                 
                 try {
+                    // 二次确认 QRCode 库已加载
+                    if (typeof QRCode === 'undefined') {
+                        throw new Error('QRCode库未加载');
+                    }
+                    
                     // 生成二维码
                     const qr = new QRCode(tempDiv, {
                         text: url,
@@ -1201,9 +1277,9 @@
                         correctLevel: QRCode.CorrectLevel.H
                     });
                     
-                    // 等待二维码生成（缩短为4秒，提高响应速度）
+                    // 等待二维码生成（延长到6秒，给安卓浏览器更多时间）
                     let attempts = 0;
-                    const maxAttempts = 40; // 4秒 (100ms * 40)
+                    const maxAttempts = 60; // 6秒 (100ms * 60)
                     
                     const checkQRCode = () => {
                         attempts++;
@@ -1216,6 +1292,7 @@
                             try {
                                 const dataUrl = qrcodeCanvas.toDataURL('image/png');
                                 if (dataUrl && dataUrl.length > 100) { // 确保数据有效
+                                    console.log('✓ 二维码生成成功（Canvas）');
                                     if (document.body.contains(tempDiv)) {
                                         document.body.removeChild(tempDiv);
                                     }
@@ -1237,6 +1314,7 @@
                                 const tempCtx = tempCanvas.getContext('2d');
                                 tempCtx.drawImage(qrcodeImg, 0, 0, 250, 250);
                                 const dataUrl = tempCanvas.toDataURL('image/png');
+                                console.log('✓ 二维码生成成功（Image）');
                                 if (document.body.contains(tempDiv)) {
                                     document.body.removeChild(tempDiv);
                                 }
@@ -1251,17 +1329,19 @@
                         if (attempts < maxAttempts) {
                             setTimeout(checkQRCode, 100);
                         } else {
+                            console.error('二维码生成超时，尝试次数:', attempts);
                             if (document.body.contains(tempDiv)) {
                                 document.body.removeChild(tempDiv);
                             }
-                            reject(new Error('二维码生成超时（等待6秒后未检测到有效的二维码数据）'));
+                            reject(new Error('二维码生成超时（6秒后未检测到有效数据）\n\n建议：\n1. 刷新页面重试\n2. 检查浏览器兼容性'));
                         }
                     };
                     
-                    // 首次检查延迟200ms，给库更多初始化时间
-                    setTimeout(checkQRCode, 200);
+                    // 首次检查延迟300ms，给安卓浏览器更多初始化时间
+                    setTimeout(checkQRCode, 300);
                     
                 } catch (error) {
+                    console.error('二维码生成异常:', error);
                     if (document.body.contains(tempDiv)) {
                         document.body.removeChild(tempDiv);
                     }
@@ -1422,6 +1502,26 @@
             if (loading && loading.parentNode) {
                 loading.parentNode.removeChild(loading);
             }
+        }
+        
+        // 页面就绪标志
+        let pageReady = false;
+        
+        // 标记页面完全就绪
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                pageReady = true;
+                console.log('✓ 页面完全就绪，可以使用所有功能');
+            }, 500); // 给安卓浏览器500ms缓冲时间
+        });
+        
+        // 如果 DOMContentLoaded 已触发，也标记为部分就绪
+        if (document.readyState === 'interactive' || document.readyState === 'complete') {
+            pageReady = true;
+        } else {
+            document.addEventListener('DOMContentLoaded', function() {
+                pageReady = true;
+            });
         }
         
         // 回车快捷键
