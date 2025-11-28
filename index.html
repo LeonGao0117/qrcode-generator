@@ -1,20 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <!-- 预加载本地资源，提升加载速度 -->
+    <link rel="preload" href="qrcode.min.js" as="script">
+    <link rel="preload" href="html2canvas.min.js" as="script">
     <title>二维码卡片生成器</title>
-    <!-- 字体加载优化：异步加载，失败不阻塞页面 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- 使用 media="print" 技巧实现异步加载 -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'; this.onload=null;">
-    <!-- 如果 JavaScript 被禁用，则正常加载字体 -->
-    <noscript>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-    </noscript>
     <style>
         * {
             margin: 0;
@@ -23,7 +20,7 @@
         }
         
         body {
-            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px 15px;
@@ -830,7 +827,10 @@
         </div>
     </div>
     
-    <!-- 二维码库加载 - 使用多个CDN备份 -->
+    <!-- 本地加载二维码库和html2canvas库 - 无需网络连接 -->
+    <script src="qrcode.min.js"></script>
+    <script src="html2canvas.min.js"></script>
+    
     <script>
         // 页面加载进度管理
         let loadProgress = 0;
@@ -853,97 +853,46 @@
                 pageLoaderEl.classList.add('loaded');
                 setTimeout(() => {
                     pageLoaderEl.style.display = 'none';
-                }, 500);
+                }, 300);
             }
         }
         
         // 初始进度
-        updateProgress(10, '正在连接服务器...');
-        
-        // 动态加载二维码库，支持多个CDN备份
-        (function loadQRCodeLibrary() {
-            const cdnList = [
-                'https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js',
-                'https://unpkg.com/qrcodejs2@0.0.2/qrcode.min.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-                'https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
-            ];
-            
-            let currentCDN = 0;
-            
-            function tryLoadFromCDN() {
-                if (currentCDN >= cdnList.length) {
-                    console.error('所有CDN均加载失败');
-                    updateProgress(100, '⚠️ 资源加载失败，但页面仍可使用');
-                    setTimeout(hideLoader, 1500);
-                    return;
-                }
-                
-                updateProgress(30 + (currentCDN * 15), `正在加载资源 (${currentCDN + 1}/${cdnList.length})...`);
-                
-                const script = document.createElement('script');
-                script.src = cdnList[currentCDN];
-                script.async = false;
-                
-                script.onload = function() {
-                    console.log('QRCode库加载成功，来源：' + cdnList[currentCDN]);
-                    updateProgress(80, '资源加载完成');
-                    setTimeout(() => {
-                        updateProgress(100, '✓ 准备就绪');
-                        setTimeout(hideLoader, 500);
-                    }, 300);
-                };
-                
-                script.onerror = function() {
-                    console.warn('CDN加载失败：' + cdnList[currentCDN]);
-                    currentCDN++;
-                    tryLoadFromCDN();
-                };
-                
-                document.head.appendChild(script);
-            }
-            
-            tryLoadFromCDN();
-        })();
+        updateProgress(30, '正在加载本地资源...');
         
         // 监听 DOM 加载完成
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
-                updateProgress(50, '页面加载完成...');
+                updateProgress(70, '页面加载完成...');
             });
         } else {
-            updateProgress(50, '页面加载完成...');
+            updateProgress(70, '页面加载完成...');
         }
         
         // 监听所有资源加载完成（包括图片、字体等）
         window.addEventListener('load', function() {
             updateProgress(90, '最后准备...');
-            // 如果二维码库还没加载完，等待一下
+            // 快速检查库是否加载成功
             setTimeout(function() {
                 if (typeof QRCode === 'undefined') {
-                    updateProgress(95, '正在等待资源...');
+                    console.error('QRCode库加载失败');
+                    updateProgress(100, '⚠️ 资源加载失败');
                 } else {
+                    console.log('所有资源加载成功（本地模式）');
                     updateProgress(100, '✓ 准备就绪');
-                    setTimeout(hideLoader, 500);
                 }
-            }, 500);
+                setTimeout(hideLoader, 300);
+            }, 100);
         });
         
-        // 超时保护：如果10秒后还在加载，强制隐藏加载器并显示提示
+        // 超时保护：如果3秒后还在加载，强制隐藏加载器
         setTimeout(function() {
             if (pageLoaderEl && !pageLoaderEl.classList.contains('loaded')) {
                 console.warn('页面加载超时，强制显示页面');
-                updateProgress(100, '⚠️ 加载较慢，已强制显示页面');
-                setTimeout(hideLoader, 1000);
-                
-                // 显示一个友好的提示
-                setTimeout(function() {
-                    if (typeof customAlert !== 'undefined') {
-                        customAlert('页面加载较慢，可能是网络原因。\n\n如果功能异常，请刷新页面重试。', 'ℹ️');
-                    }
-                }, 1500);
+                updateProgress(100, '✓ 已加载');
+                setTimeout(hideLoader, 300);
             }
-        }, 10000); // 10秒超时
+        }, 3000); // 缩短为3秒
     </script>
     
     <script>
@@ -1167,22 +1116,11 @@
                 }
             }
             
-            // 检查 QRCode 库是否加载，如果未加载则等待
+            // 检查 QRCode 库是否加载（本地加载模式，应该即时可用）
             if (typeof QRCode === 'undefined') {
-                // 尝试等待库加载（最多等待5秒）
-                let waitCount = 0;
-                const maxWait = 50; // 5秒（100ms * 50）
-                
-                while (typeof QRCode === 'undefined' && waitCount < maxWait) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    waitCount++;
-                }
-                
-                // 如果还是未加载，显示错误
-                if (typeof QRCode === 'undefined') {
-                    await customAlert(langTexts[currentLang].alertQRFailed, '⚠️');
-                    return;
-                }
+                // 本地加载失败，直接提示刷新页面
+                await customAlert(langTexts[currentLang].alertQRFailed + '<br><br>建议：刷新页面重试', '⚠️');
+                return;
             }
             
             // 显示加载提示
@@ -1263,9 +1201,9 @@
                         correctLevel: QRCode.CorrectLevel.H
                     });
                     
-                    // 等待二维码生成（增加等待时间到6秒，针对手机端优化）
+                    // 等待二维码生成（缩短为4秒，提高响应速度）
                     let attempts = 0;
-                    const maxAttempts = 60; // 6秒 (100ms * 60)
+                    const maxAttempts = 40; // 4秒 (100ms * 40)
                     
                     const checkQRCode = () => {
                         attempts++;
@@ -1497,3 +1435,4 @@
     </script>
 </body>
 </html>
+
